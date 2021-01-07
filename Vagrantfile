@@ -43,14 +43,14 @@ if File.exist?(CONFIG)
 end
 
 # Defaults for config options defined in CONFIG
-$num_instances ||= 3
+$num_instances ||= 4
 $instance_name_prefix ||= "k8s"
 $vm_gui ||= false
 $vm_memory ||= 2048
-$vm_cpus ||= 1
+$vm_cpus ||= 2
 $shared_folders ||= {}
 $forwarded_ports ||= {}
-$subnet ||= "172.18.8"
+$subnet ||= "172.16.0"
 $os ||= "ubuntu1804"
 $network_plugin ||= "flannel"
 # Setting multi_networking to true will install Multus: https://github.com/intel/multus-cni
@@ -79,7 +79,7 @@ host_vars = {}
 
 $box = SUPPORTED_OS[$os][:box]
 # if $inventory is not set, try to use example
-$inventory = "inventory/sample" if ! $inventory
+$inventory = "inventory/s000" if ! $inventory
 $inventory = File.absolute_path($inventory, File.dirname(__FILE__))
 
 # if $inventory has a hosts.ini file use it, otherwise copy over
