@@ -7,22 +7,10 @@ require 'fileutils'
 
 Vagrant.require_version ">= 2.0.0"
 
-CONFIG = File.join(File.dirname(__FILE__), ENV['KUBESPRAY_VAGRANT_CONFIG'] || 'vagrant/config.rb')
-
-COREOS_URL_TEMPLATE = "https://storage.googleapis.com/%s.release.core-os.net/amd64-usr/current/coreos_production_vagrant.json"
-FLATCAR_URL_TEMPLATE = "https://%s.release.flatcar-linux.net/amd64-usr/current/flatcar_production_vagrant.json"
-
 # Uniq disk UUID for libvirt
 DISK_UUID = Time.now.utc.to_i
 
 SUPPORTED_OS = {
-  "coreos-stable"       => {box: "coreos-stable",              user: "core", box_url: COREOS_URL_TEMPLATE % ["stable"]},
-  "coreos-alpha"        => {box: "coreos-alpha",               user: "core", box_url: COREOS_URL_TEMPLATE % ["alpha"]},
-  "coreos-beta"         => {box: "coreos-beta",                user: "core", box_url: COREOS_URL_TEMPLATE % ["beta"]},
-  "flatcar-stable"      => {box: "flatcar-stable",             user: "core", box_url: FLATCAR_URL_TEMPLATE % ["stable"]},
-  "flatcar-beta"        => {box: "flatcar-beta",               user: "core", box_url: FLATCAR_URL_TEMPLATE % ["beta"]},
-  "flatcar-alpha"       => {box: "flatcar-alpha",              user: "core", box_url: FLATCAR_URL_TEMPLATE % ["alpha"]},
-  "flatcar-edge"        => {box: "flatcar-edge",               user: "core", box_url: FLATCAR_URL_TEMPLATE % ["edge"]},
   "ubuntu1604"          => {box: "generic/ubuntu1604",         user: "vagrant"},
   "ubuntu1804"          => {box: "generic/ubuntu1804",         user: "vagrant"},
   "ubuntu2004"          => {box: "generic/ubuntu2004",         user: "vagrant"},
@@ -38,12 +26,12 @@ SUPPORTED_OS = {
   "oraclelinux8"        => {box: "generic/oracle8",            user: "vagrant"},
 }
 
-if File.exist?(CONFIG)
-  require CONFIG
-end
+#if File.exist?(CONFIG)
+#  require CONFIG
+#end
 
 # Defaults for config options defined in CONFIG
-$num_instances ||= 4
+$num_instances ||= 6
 $instance_name_prefix ||= "k8s"
 $vm_gui ||= false
 $vm_memory ||= 2048
@@ -133,31 +121,12 @@ Vagrant.configure("2") do |config|
         node.proxy.no_proxy = $no_proxy
       end
 
-      ["vmware_fusion", "vmware_workstation"].each do |vmware|
-        node.vm.provider vmware do |v|
-          v.vmx['memsize'] = $vm_memory
-          v.vmx['numvcpus'] = $vm_cpus
-        end
-      end
-
-      node.vm.provider :virtualbox do |vb|
-        vb.memory = $vm_memory
-        vb.cpus = $vm_cpus
-        vb.gui = $vm_gui
-        vb.linked_clone = true
-        vb.customize ["modifyvm", :id, "--vram", "8"] # ubuntu defaults to 256 MB which is a waste of precious RAM
-      end
-
       node.vm.provider :libvirt do |lv|
         lv.nested = $libvirt_nested
         lv.cpu_mode = "host-model"
         lv.memory = $vm_memory
         lv.cpus = $vm_cpus
         lv.default_prefix = 'kubespray'
-        # Fix kernel panic on fedora 28
-        if $os == "fedora"
-          lv.cpu_mode = "host-passthrough"
-        end
       end
 
       if $kube_node_instances_with_disks
@@ -191,11 +160,6 @@ Vagrant.configure("2") do |config|
       # Disable swap for each vm
       node.vm.provision "shell", inline: "swapoff -a"
 
-      # Disable firewalld on oraclelinux vms
-      if ["oraclelinux","oraclelinux8"].include? $os
-        node.vm.provision "shell", inline: "systemctl stop firewalld; systemctl disable firewalld"
-      end
-
       host_vars[vm_name] = {
         "ip": ip,
         "flannel_interface": "eth1",
@@ -216,30 +180,7 @@ Vagrant.configure("2") do |config|
         "local_path_provisioner_claim_root": "#{$local_path_provisioner_claim_root}",
         "ansible_ssh_user": SUPPORTED_OS[$os][:user]
       }
-
-      # Only execute the Ansible provisioner once, when all the machines are up and ready.
-      if i == $num_instances
-        node.vm.provision "ansible" do |ansible|
-          ansible.playbook = $playbook
-          $ansible_inventory_path = File.join( $inventory, "hosts.ini")
-          if File.exist?($ansible_inventory_path)
-            ansible.inventory_path = $ansible_inventory_path
-          end
-          ansible.become = true
-          ansible.limit = "all,localhost"
-          ansible.host_key_checking = false
-          ansible.raw_arguments = ["--forks=#{$num_instances}", "--flush-cache", "-e ansible_become_pass=vagrant"]
-          ansible.host_vars = host_vars
-          #ansible.tags = ['download']
-          ansible.groups = {
-            "etcd" => ["#{$instance_name_prefix}-[1:#{$etcd_instances}]"],
-            "kube-master" => ["#{$instance_name_prefix}-[1:#{$kube_master_instances}]"],
-            "kube-node" => ["#{$instance_name_prefix}-[1:#{$kube_node_instances}]"],
-            "k8s-cluster:children" => ["kube-master", "kube-node"],
-          }
-        end
       end
-
     end
   end
-end
+
