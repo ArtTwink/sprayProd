@@ -14,4 +14,5 @@ d=$(date '+%Y.%m.%d_%H:%M')
 # install sshpass on all nodes and add `-k` options 
 
 export ANSIBLE_LOG_PATH=./deploy-$d.log
-ansible-playbook -u "$1" -i inventory/s000/inventory.ini cluster.yml -b --diff --extra-vars "ansible_sudo_pass=123"
+ansible-playbook -u "$1" -i inventory/s000/inventory.ini cluster.yml -b --diff
+#ansible-playbook -u "$1" -i inventory/s000/inventory.ini cluster.yml -b --diff --extra-vars "ansible_sudo_pass=123"
