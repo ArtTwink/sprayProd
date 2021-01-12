@@ -34,7 +34,7 @@ SUPPORTED_OS = {
 $num_instances ||= 6
 $instance_name_prefix ||= "k8s"
 $vm_gui ||= false
-$vm_memory ||= 1536
+$vm_memory ||= 2048
 $vm_cpus ||= 2
 $shared_folders ||= {}
 $forwarded_ports ||= {6443 => 6443}
