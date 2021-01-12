@@ -52,9 +52,9 @@ $kube_master_instances ||= $num_instances == 1 ? $num_instances : ($num_instance
 # All nodes are kube nodes
 $kube_node_instances ||= $num_instances
 # The following only works when using the libvirt provider
-$kube_node_instances_with_disks ||= false
+$kube_node_instances_with_disks ||= true
 $kube_node_instances_with_disks_size ||= "20G"
-$kube_node_instances_with_disks_number ||= 2
+$kube_node_instances_with_disks_number ||= 3
 $override_disk_size ||= false
 $disk_size ||= "20GB"
 $local_path_provisioner_enabled ||= false
