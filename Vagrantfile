@@ -34,12 +34,12 @@ SUPPORTED_OS = {
 $num_instances ||= 6
 $instance_name_prefix ||= "k8s"
 $vm_gui ||= false
-$vm_memory ||= 1536
+$vm_memory ||= 2048
 $vm_cpus ||= 2
 $shared_folders ||= {}
 $forwarded_ports ||= {6443 => 6443}
 $subnet ||= "172.16.0"
-$os ||= "ubuntu1804"
+$os ||= "ubuntu2004"
 $network_plugin ||= "flannel"
 # Setting multi_networking to true will install Multus: https://github.com/intel/multus-cni
 $multi_networking ||= false
@@ -52,7 +52,7 @@ $kube_master_instances ||= $num_instances == 1 ? $num_instances : ($num_instance
 # All nodes are kube nodes
 $kube_node_instances ||= $num_instances
 # The following only works when using the libvirt provider
-$kube_node_instances_with_disks ||= true
+$kube_node_instances_with_disks ||= false
 $kube_node_instances_with_disks_size ||= "20G"
 $kube_node_instances_with_disks_number ||= 3
 $override_disk_size ||= false
@@ -119,6 +119,14 @@ Vagrant.configure("2") do |config|
         node.proxy.http     = ENV['HTTP_PROXY'] || ENV['http_proxy'] || ""
         node.proxy.https    = ENV['HTTPS_PROXY'] || ENV['https_proxy'] ||  ""
         node.proxy.no_proxy = $no_proxy
+      end
+
+      node.vm.provider :virtualbox do |vb|
+        vb.memory = $vm_memory
+        vb.cpus = $vm_cpus
+        vb.gui = $vm_gui
+        vb.linked_clone = true
+        vb.customize ["modifyvm", :id, "--vram", "8"] # ubuntu defaults to 256 MB which is a waste of precious RAM
       end
 
       node.vm.provider :libvirt do |lv|
