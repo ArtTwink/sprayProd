@@ -14,6 +14,7 @@ SUPPORTED_OS = {
   "ubuntu1604"          => {box: "generic/ubuntu1604",         user: "vagrant"},
   "ubuntu1804"          => {box: "generic/ubuntu1804",         user: "vagrant"},
   "ubuntu2004"          => {box: "generic/ubuntu2004",         user: "vagrant"},
+  "debian10"            => {box: "generic/debian10",           user: "vagrant"},
   "centos"              => {box: "centos/7",                   user: "vagrant"},
   "centos-bento"        => {box: "bento/centos-7.6",           user: "vagrant"},
   "centos8"             => {box: "centos/8",                   user: "vagrant"},
@@ -35,11 +36,11 @@ $num_instances ||= 6
 $instance_name_prefix ||= "k8s"
 $vm_gui ||= false
 $vm_memory ||= 2048
-$vm_cpus ||= 2
+$vm_cpus ||= 4
 $shared_folders ||= {}
 $forwarded_ports ||= {6443 => 6443}
 $subnet ||= "172.16.0"
-$os ||= "ubuntu2004"
+$os ||= "ubuntu1804"
 $network_plugin ||= "flannel"
 # Setting multi_networking to true will install Multus: https://github.com/intel/multus-cni
 $multi_networking ||= false
